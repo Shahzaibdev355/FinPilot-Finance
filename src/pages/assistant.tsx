@@ -1,32 +1,311 @@
-import { useState } from 'react';
-import { ArrowUp, CheckCircle2, ChevronDown, CircleDot, FileSearch, LockKeyhole, Plus, Sparkles } from 'lucide-react';
-import { useAssistantPrompt } from '@/hooks/use-finpilot';
+import { useEffect, useState } from 'react';
+import {
+  ArrowUp,
+  ChevronDown,
+  CircleDot,
+  FileSearch,
+  LockKeyhole,
+  Plus,
+  Sparkles,
+} from 'lucide-react';
+
+import { useChat } from '@/features/chat/hooks/use-chat';
+import { showApiError } from '@/lib/api-error';
+
 import { PageHeader } from '@/components/finpilot-shell';
 
-type Message = { role: 'user' | 'assistant'; text: string; sources?: string[] };
-const suggestions = ['What changed in my portfolio today?', 'How concentrated is my technology exposure?', 'Give me a calm read on the current market'];
+type Message = {
+  role: 'user' | 'assistant';
+  text: string;
+};
+
+const suggestions = [
+  'What changed in my portfolio today?',
+  'How concentrated is my technology exposure?',
+  'Give me a calm read on the current market',
+];
 
 export default function AssistantPage() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
-  const assistant = useAssistantPrompt();
+
+  const assistant = useChat();
+
+  useEffect(() => {
+    if (assistant.isError && assistant.error) {
+      showApiError(assistant.error);
+    }
+  }, [assistant.isError, assistant.error]);
 
   const submit = (prompt: string) => {
     const clean = prompt.trim();
-    if (!clean || assistant.isPending) return;
+
+    if (!clean || assistant.isPending) {
+      return;
+    }
+
     setInput('');
-    setMessages((current) => [...current, { role: 'user', text: clean }]);
-    assistant.mutate(clean, { onSuccess: (result) => setMessages((current) => [...current, { role: 'assistant', text: result.answer, sources: result.sources }]) });
+
+    setMessages((current) => [
+      ...current,
+      {
+        role: 'user',
+        text: clean,
+      },
+    ]);
+
+    assistant.mutate(
+      {
+        message: clean,
+      },
+      {
+        onSuccess: (result) => {
+          setMessages((current) => [
+            ...current,
+            {
+              role: 'assistant',
+              text: result.response,
+            },
+          ]);
+        },
+      },
+    );
   };
-  return <div className="mx-auto max-w-[1100px] space-y-7">
-    <PageHeader eyebrow="FinPilot analyst" title="Ask a better question" description="A grounded financial conversation for understanding your portfolio and the market. Never a trade recommendation." action={<div className="inline-flex items-center gap-2 rounded-xl border border-[#d9e6df] bg-[#f1f8f2] px-3 py-2 text-xs font-bold text-[#4b8b62]"><LockKeyhole className="h-3.5 w-3.5" />Read-only by design</div>} />
-    <div className="grid gap-5 lg:grid-cols-[1fr_285px]">
-      <section className="overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="flex items-center justify-between border-b border-border px-5 py-4"><div className="flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-accent"><Sparkles className="h-4 w-4" /></span><div><div className="text-xs font-bold">FinPilot analyst</div><div className="mt-0.5 flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-[#5e9b77]" />Ready · portfolio context loaded</div></div></div><button onClick={() => setMessages([])} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[10px] font-bold text-muted-foreground hover:bg-muted hover:text-foreground" data-testid="button-new-analysis"><Plus className="h-3.5 w-3.5" />New analysis</button></div>
-        <div className="min-h-[410px] space-y-5 p-5 md:p-7">{messages.length === 0 ? <div className="flex min-h-[345px] flex-col items-center justify-center text-center"><div className="grid h-14 w-14 place-items-center rounded-2xl border border-[#e8d99f] bg-[#fff7dc] text-[#a87419]"><FileSearch className="h-6 w-6" /></div><h2 className="mt-5 text-lg font-extrabold tracking-[-0.03em]">What should we look at?</h2><p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">Ask about your allocation, company fundamentals, or the context behind a market move.</p><div className="mt-6 grid w-full max-w-xl gap-2 md:grid-cols-3">{suggestions.map((suggestion, index) => <button onClick={() => submit(suggestion)} key={suggestion} className="rounded-xl border border-border bg-background p-3 text-left text-[11px] font-semibold leading-4 transition hover:-translate-y-0.5 hover:border-primary/35 hover:bg-[#f4faf8]" data-testid={`button-suggested-prompt-${index}`}>{suggestion}<ArrowUp className="mt-3 h-3.5 w-3.5 rotate-45 text-primary" /></button>)}</div></div> : <>{messages.map((message, index) => <div key={`${message.role}-${index}`} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : ''}`} data-testid={`message-${message.role}-${index}`}><div className={`max-w-[86%] rounded-2xl px-4 py-3 text-sm leading-6 ${message.role === 'user' ? 'rounded-br-md bg-primary text-primary-foreground' : 'rounded-bl-md bg-muted text-foreground'}`}>{message.text}{message.sources && <div className="mt-4 border-t border-border/70 pt-3"><div className="mb-2 font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Sources considered</div><div className="space-y-1.5">{message.sources.map((source) => <div className="flex items-center gap-2 text-[10px] text-muted-foreground" key={source}><CheckCircle2 className="h-3 w-3 text-[#5e9b77]" />{source}</div>)}</div></div>}</div></div>)}{assistant.isPending && <div className="flex gap-3" data-testid="status-assistant-loading"><div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-accent"><Sparkles className="h-4 w-4" /></div><div className="rounded-2xl rounded-bl-md bg-muted px-4 py-3"><div className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" /><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary [animation-delay:120ms]" /><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary [animation-delay:240ms]" /></div></div></div>}{assistant.isError && <div className="rounded-xl border border-[#e7b1a8] bg-[#fff7f3] p-3 text-xs text-[#8f3d32]" data-testid="status-assistant-error">The analyst could not complete that read. Try asking again.</div>}</>}</div>
-        <form onSubmit={(event) => { event.preventDefault(); submit(input); }} className="border-t border-border bg-muted/30 p-4 md:p-5"><div className="flex items-end gap-2 rounded-xl border border-input bg-card p-2 shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10"><textarea value={input} onChange={(event) => setInput(event.target.value)} rows={1} placeholder="Ask about your portfolio or the market..." className="max-h-28 min-h-9 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted-foreground" data-testid="input-assistant-prompt" /><button type="submit" disabled={!input.trim() || assistant.isPending} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Submit analyst prompt" data-testid="button-submit-prompt"><ArrowUp className="h-4 w-4" /></button></div><div className="mt-2 flex items-center gap-1.5 px-1 font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground"><LockKeyhole className="h-3 w-3" />No trades · no transactions · context only</div></form>
-      </section>
-      <aside className="space-y-5"><div className="rounded-2xl border border-border bg-card p-5"><div className="flex items-center justify-between"><h2 className="text-sm font-extrabold">How it works</h2><ChevronDown className="h-4 w-4 text-muted-foreground" /></div><div className="mt-4 space-y-4">{[['01', 'Reads your context', 'Portfolio, watchlist, and saved preferences'], ['02', 'Checks the evidence', 'Current data and source notes, not hot takes'], ['03', 'Keeps you in control', 'Clear caveats, no execution layer']].map(([number, title, detail]) => <div className="flex gap-3" key={number}><span className="font-mono text-[10px] text-[#d3972c]">{number}</span><div><div className="text-xs font-bold">{title}</div><div className="mt-1 text-[11px] leading-4 text-muted-foreground">{detail}</div></div></div>)}</div></div><div className="rounded-2xl border border-border bg-[#f4faf8] p-5"><div className="flex items-center gap-2 text-xs font-bold text-primary"><CircleDot className="h-3.5 w-3.5" />Agent activity</div><div className="mt-4 space-y-3 text-[11px]"><div className="flex justify-between"><span className="text-muted-foreground">Model</span><span className="font-mono">FinPilot / Atlas</span></div><div className="flex justify-between"><span className="text-muted-foreground">Context window</span><span className="font-mono">Portfolio + markets</span></div><div className="flex justify-between"><span className="text-muted-foreground">Last indexed</span><span className="font-mono">2 min ago</span></div></div></div></aside>
+
+  return (
+    <div className="mx-auto max-w-[1100px] space-y-7">
+      <PageHeader
+        eyebrow="FinPilot analyst"
+        title="Ask a better question"
+        description="A grounded financial conversation for understanding your portfolio and the market. Never a trade recommendation."
+        action={
+          <div className="inline-flex items-center gap-2 rounded-xl border border-[#d9e6df] bg-[#f1f8f2] px-3 py-2 text-xs font-bold text-[#4b8b62]">
+            <LockKeyhole className="h-3.5 w-3.5" />
+            Read-only by design
+          </div>
+        }
+      />
+
+      <div className="grid gap-5 lg:grid-cols-[1fr_285px]">
+        <section className="overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div className="flex items-center gap-3">
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-accent">
+                <Sparkles className="h-4 w-4" />
+              </span>
+
+              <div>
+                <div className="text-xs font-bold">FinPilot analyst</div>
+
+                <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#5e9b77]" />
+                  Ready · portfolio context loaded
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setMessages([])}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[10px] font-bold text-muted-foreground hover:bg-muted hover:text-foreground"
+              data-testid="button-new-analysis"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New analysis
+            </button>
+          </div>
+
+          <div className="min-h-[410px] space-y-5 p-5 md:p-7">
+            {messages.length === 0 ? (
+              <div className="flex min-h-[345px] flex-col items-center justify-center text-center">
+                <div className="grid h-14 w-14 place-items-center rounded-2xl border border-[#e8d99f] bg-[#fff7dc] text-[#a87419]">
+                  <FileSearch className="h-6 w-6" />
+                </div>
+
+                <h2 className="mt-5 text-lg font-extrabold tracking-[-0.03em]">
+                  What should we look at?
+                </h2>
+
+                <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+                  Ask about your allocation, company fundamentals, or the
+                  context behind a market move.
+                </p>
+
+                <div className="mt-6 grid w-full max-w-xl gap-2 md:grid-cols-3">
+                  {suggestions.map((suggestion, index) => (
+                    <button
+                      onClick={() => submit(suggestion)}
+                      key={suggestion}
+                      className="rounded-xl border border-border bg-background p-3 text-left text-[11px] font-semibold leading-4 transition hover:-translate-y-0.5 hover:border-primary/35 hover:bg-[#f4faf8]"
+                      data-testid={`button-suggested-prompt-${index}`}
+                    >
+                      {suggestion}
+
+                      <ArrowUp className="mt-3 h-3.5 w-3.5 rotate-45 text-primary" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <>
+                {messages.map((message, index) => (
+                  <div
+                    key={`${message.role}-${index}`}
+                    className={`flex gap-3 ${
+                      message.role === 'user' ? 'justify-end' : ''
+                    }`}
+                    data-testid={`message-${message.role}-${index}`}
+                  >
+                    {message.role === 'assistant' && (
+                      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-accent">
+                        <Sparkles className="h-4 w-4" />
+                      </div>
+                    )}
+
+                    <div
+                      className={`max-w-[86%] rounded-2xl px-4 py-3 text-sm leading-6 ${
+                        message.role === 'user'
+                          ? 'rounded-br-md bg-primary text-primary-foreground'
+                          : 'rounded-bl-md bg-muted text-foreground'
+                      }`}
+                    >
+                      {message.text}
+                    </div>
+                  </div>
+                ))}
+
+                {assistant.isPending && (
+                  <div
+                    className="flex gap-3"
+                    data-testid="status-assistant-loading"
+                  >
+                    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-accent">
+                      <Sparkles className="h-4 w-4" />
+                    </div>
+
+                    <div className="rounded-2xl rounded-bl-md bg-muted px-4 py-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary [animation-delay:120ms]" />
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary [animation-delay:240ms]" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {assistant.isError && (
+                  <div
+                    className="rounded-xl border border-[#e7b1a8] bg-[#fff7f3] p-3 text-xs text-[#8f3d32]"
+                    data-testid="status-assistant-error"
+                  >
+                    The analyst could not complete that read. Try asking
+                    again.
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              submit(input);
+            }}
+            className="border-t border-border bg-muted/30 p-4 md:p-5"
+          >
+            <div className="flex items-end gap-2 rounded-xl border border-input bg-card p-2 shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
+              <textarea
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                rows={1}
+                placeholder="Ask about your portfolio or the market..."
+                className="max-h-28 min-h-9 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted-foreground"
+                data-testid="input-assistant-prompt"
+              />
+
+              <button
+                type="submit"
+                disabled={!input.trim() || assistant.isPending}
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Submit analyst prompt"
+                data-testid="button-submit-prompt"
+              >
+                <ArrowUp className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-2 flex items-center gap-1.5 px-1 font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">
+              <LockKeyhole className="h-3 w-3" />
+              No trades · no transactions · context only
+            </div>
+          </form>
+        </section>
+
+        <aside className="space-y-5">
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-extrabold">How it works</h2>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </div>
+
+            <div className="mt-4 space-y-4">
+              {[
+                [
+                  '01',
+                  'Reads your context',
+                  'Portfolio, watchlist, and saved preferences',
+                ],
+                [
+                  '02',
+                  'Checks the evidence',
+                  'Current data and source notes, not hot takes',
+                ],
+                [
+                  '03',
+                  'Keeps you in control',
+                  'Clear caveats, no execution layer',
+                ],
+              ].map(([number, title, detail]) => (
+                <div className="flex gap-3" key={number}>
+                  <span className="font-mono text-[10px] text-[#d3972c]">
+                    {number}
+                  </span>
+
+                  <div>
+                    <div className="text-xs font-bold">{title}</div>
+                    <div className="mt-1 text-[11px] leading-4 text-muted-foreground">
+                      {detail}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-[#f4faf8] p-5">
+            <div className="flex items-center gap-2 text-xs font-bold text-primary">
+              <CircleDot className="h-3.5 w-3.5" />
+              Agent activity
+            </div>
+
+            <div className="mt-4 space-y-3 text-[11px]">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Model</span>
+                <span className="font-mono">FinPilot Supervisor</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Context window</span>
+                <span className="font-mono">Portfolio + markets</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Status</span>
+                <span className="font-mono">Connected</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
-  </div>;
+  );
 }

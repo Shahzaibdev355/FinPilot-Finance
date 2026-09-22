@@ -1,22 +1,16 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { getDashboard, getMarket, getMarkets, getPortfolio, submitAssistantPrompt } from '@/services/finpilot';
+export { useChat } from '@/features/chat/hooks/use-chat';
 
-export function useDashboard() {
-  return useQuery({ queryKey: ['finpilot', 'dashboard'], queryFn: getDashboard });
-}
+export {
+  useMarketQuote,
+  useMarketHistory,
+  useCompany,
+} from '@/features/market/hooks/use-market';
 
-export function usePortfolio() {
-  return useQuery({ queryKey: ['finpilot', 'portfolio'], queryFn: getPortfolio });
-}
+export { useNews } from '@/features/news/hooks/use-news';
 
-export function useMarkets() {
-  return useQuery({ queryKey: ['finpilot', 'markets'], queryFn: getMarkets });
-}
+export {
+  usePortfolio,
+  usePortfolioCalculation,
+} from '@/features/portfolio/hooks/use-portfolio';
 
-export function useMarket(symbol: string) {
-  return useQuery({ queryKey: ['finpilot', 'market', symbol], queryFn: () => getMarket(symbol), enabled: Boolean(symbol) });
-}
-
-export function useAssistantPrompt() {
-  return useMutation({ mutationFn: submitAssistantPrompt });
-}
+export { useHealth } from '@/features/health/hooks/use-health';

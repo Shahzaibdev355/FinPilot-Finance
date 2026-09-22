@@ -1,0 +1,11 @@
+import { useQuery } from '@tanstack/react-query';
+
+import { getHealth } from '../api/health.api';
+
+export function useHealth() {
+  return useQuery({
+    queryKey: ['health'],
+    queryFn: getHealth,
+    staleTime: 1000 * 60,
+  });
+}
