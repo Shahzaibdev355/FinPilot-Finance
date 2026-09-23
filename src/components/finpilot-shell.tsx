@@ -54,7 +54,7 @@ export function FinPilotShell({ children }: { children: ReactNode }) {
           </button>
           <div className="mt-4 flex items-center gap-3 border-t border-sidebar-border px-3 pt-4">
             <div className="grid h-8 w-8 place-items-center rounded-full bg-[#e6b94c] font-mono text-xs font-medium text-[#174247]">AM</div>
-            <div className="min-w-0"><div className="truncate text-xs font-bold">Alex Morgan</div><div className="font-mono text-[10px] text-sidebar-foreground/45">Personal workspace</div></div>
+            <div className="min-w-0"><div className="truncate text-xs font-bold">Shahzaib</div><div className="font-mono text-[10px] text-sidebar-foreground/45">Personal workspace</div></div>
           </div>
         </div>
       </aside>

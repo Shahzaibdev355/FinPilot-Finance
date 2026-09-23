@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   ArrowUp,
   ChevronDown,
@@ -7,26 +7,29 @@ import {
   LockKeyhole,
   Plus,
   Sparkles,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { useChat } from '@/features/chat/hooks/use-chat';
-import { showApiError } from '@/lib/api-error';
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
-import { PageHeader } from '@/components/finpilot-shell';
+import { useChat } from "@/features/chat/hooks/use-chat";
+import { showApiError } from "@/lib/api-error";
+
+import { PageHeader } from "@/components/finpilot-shell";
 
 type Message = {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   text: string;
 };
 
 const suggestions = [
-  'What changed in my portfolio today?',
-  'How concentrated is my technology exposure?',
-  'Give me a calm read on the current market',
+  "What changed in my portfolio today?",
+  "How concentrated is my technology exposure?",
+  "Give me a calm read on the current market",
 ];
 
 export default function AssistantPage() {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
 
   const assistant = useChat();
@@ -44,12 +47,12 @@ export default function AssistantPage() {
       return;
     }
 
-    setInput('');
+    setInput("");
 
     setMessages((current) => [
       ...current,
       {
-        role: 'user',
+        role: "user",
         text: clean,
       },
     ]);
@@ -63,7 +66,7 @@ export default function AssistantPage() {
           setMessages((current) => [
             ...current,
             {
-              role: 'assistant',
+              role: "assistant",
               text: result.response,
             },
           ]);
@@ -151,11 +154,11 @@ export default function AssistantPage() {
                   <div
                     key={`${message.role}-${index}`}
                     className={`flex gap-3 ${
-                      message.role === 'user' ? 'justify-end' : ''
+                      message.role === "user" ? "justify-end" : ""
                     }`}
                     data-testid={`message-${message.role}-${index}`}
                   >
-                    {message.role === 'assistant' && (
+                    {message.role === "assistant" && (
                       <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-accent">
                         <Sparkles className="h-4 w-4" />
                       </div>
@@ -163,12 +166,20 @@ export default function AssistantPage() {
 
                     <div
                       className={`max-w-[86%] rounded-2xl px-4 py-3 text-sm leading-6 ${
-                        message.role === 'user'
-                          ? 'rounded-br-md bg-primary text-primary-foreground'
-                          : 'rounded-bl-md bg-muted text-foreground'
+                        message.role === "user"
+                          ? "rounded-br-md bg-primary text-primary-foreground"
+                          : "rounded-bl-md bg-muted text-foreground"
                       }`}
                     >
-                      {message.text}
+                      {message.role === "assistant" ? (
+                        <div className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 [&_strong]:font-bold">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {message.text}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        message.text
+                      )}
                     </div>
                   </div>
                 ))}
@@ -197,8 +208,7 @@ export default function AssistantPage() {
                     className="rounded-xl border border-[#e7b1a8] bg-[#fff7f3] p-3 text-xs text-[#8f3d32]"
                     data-testid="status-assistant-error"
                   >
-                    The analyst could not complete that read. Try asking
-                    again.
+                    The analyst could not complete that read. Try asking again.
                   </div>
                 )}
               </>
@@ -250,19 +260,19 @@ export default function AssistantPage() {
             <div className="mt-4 space-y-4">
               {[
                 [
-                  '01',
-                  'Reads your context',
-                  'Portfolio, watchlist, and saved preferences',
+                  "01",
+                  "Reads your context",
+                  "Portfolio, watchlist, and saved preferences",
                 ],
                 [
-                  '02',
-                  'Checks the evidence',
-                  'Current data and source notes, not hot takes',
+                  "02",
+                  "Checks the evidence",
+                  "Current data and source notes, not hot takes",
                 ],
                 [
-                  '03',
-                  'Keeps you in control',
-                  'Clear caveats, no execution layer',
+                  "03",
+                  "Keeps you in control",
+                  "Clear caveats, no execution layer",
                 ],
               ].map(([number, title, detail]) => (
                 <div className="flex gap-3" key={number}>
