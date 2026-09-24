@@ -1,22 +1,22 @@
-import { createRoot } from 'react-dom/client';
+import { createRoot } from "react-dom/client";
 
-import App from './App';
-import { ErrorBoundary } from '@/components/error-boundary';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
+import App from "./App";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "sonner";
 
-import { queryClient } from '@/api/query-client';
+import { queryClient } from "@/api/query-client";
 
-import './index.css';
+import "./index.css";
 
-createRoot(document.getElementById('root')!, {
+createRoot(document.getElementById("root")!, {
   // Keeps caught errors off reportError(), which would raise the dev overlay.
   onCaughtError: (error, errorInfo) => {
     console.error(error, errorInfo.componentStack);
   },
 }).render(
   <ErrorBoundary>
-    <QueryClientProvider clientName="finpilot" client={queryClient}>
+    <QueryClientProvider client={queryClient}>
       <App />
       <Toaster position="top-right" richColors closeButton />
     </QueryClientProvider>

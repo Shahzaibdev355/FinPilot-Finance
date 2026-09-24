@@ -1,5 +1,4 @@
 import { type ReactNode } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
@@ -16,8 +15,6 @@ import {
   useLocation,
   Router as WouterRouter,
 } from 'wouter';
-
-const queryClient = new QueryClient();
 
 function Router() {
   return (
@@ -46,14 +43,12 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <Router />
-        </WouterRouter>
-        <Toaster position="bottom-right" richColors />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <TooltipProvider>
+      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+        <Router />
+      </WouterRouter>
+      <Toaster position="bottom-right" richColors />
+    </TooltipProvider>
   );
 }
 
